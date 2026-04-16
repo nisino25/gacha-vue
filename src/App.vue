@@ -37,7 +37,7 @@
       <div
         v-if="isSearchOpen"
         class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-      >
+        >
         <div class="bg-white w-[500px] max-h-[80vh] rounded-xl p-4 shadow-lg overflow-hidden">
 
           <!-- header -->
@@ -90,40 +90,46 @@
       <div
         v-for="(items, yearMonth) in groupedByYearMonth"
         :key="yearMonth"
-        class="min-w-[300px] bg-gray-100 p-4 rounded"
+        class="min-w-[300px]"
       >
-        <h2 class="text-xl font-bold mb-4">{{ yearMonth }}（{{ items.length }}）</h2>
+        <h2 class="text-xl font-bold mb-4 p-2 bg-gray-200">{{ yearMonth }}（{{ items.length }}）</h2>
         <div
-        v-for="item in items"
-        :key="item.url"
-        class="bg-white p-3 rounded mb-3 shadow"
-        >
-          <a :href="item.url" target="_blank" rel="noopener noreferrer">
-            <img :src="item.thumbnail" class="w-full mb-4" />
-          </a>
+          v-for="item in items"
+          :key="item.url"
+          class="relative bg-white rounded mb-3 shadow border transition hover:shadow-md overflow-hidden"
+          >
+          <!-- <div style="display: block; height: 100px; widows: 100%; background-color: red;"></div> -->
+          <a :href="item.url" target="_blank" rel="noopener noreferrer" class="block">
+              <div class="block img-container relative h-[350px] w-full  overflow-hidden">
+                <img :src="item.thumbnail" class="h-full mb-4 absolute top-0 left-[50%] transform -translate-x-1/2" style="max-width: unset;"/>
+              </div>
+            </a>
 
-          <div class="flex justify-between">
-            <strong class="">第{{ item.week }}週・{{ item.kinds }}種</strong>
-            <div>
-              <button
-                @click="toggleLike(item)"
-                class="text-xl transition"
-              >
-                <span v-if="isLiked(item)" class="text-yellow-400">⭐</span>
-                <span v-else class="text-gray-300">☆</span>
-              </button>
-              <a
-                :href="'https://jp.mercari.com/search?keyword=' + item.name + ' めじるしアクセサリー'"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="ml-4 inline-block px-2 py-2 bg-red-500 text-white text-sm font-semibold rounded-lg shadow hover:bg-red-600 hover:shadow-md transition"
-              >
-                メルカリ
-              </a>
+          <div class="p-3 ">
 
+            <div class="flex justify-between items-center">
+              <strong class="">{{ item.yearMonth.split('-')[1] }}月{{ item.week }}週 - {{ item.kinds }}種</strong>
+              <div>
+                <button
+                  @click="toggleLike(item)"
+                  class="text-xl transition"
+                >
+                  <span v-if="isLiked(item)" class="text-yellow-400">⭐</span>
+                  <span v-else class="text-gray-300">☆</span>
+                </button>
+                <a
+                  :href="'https://jp.mercari.com/search?keyword=' + item.name + ' めじるしアクセサリー'"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="ml-4 inline-block px-2 py-1 bg-red-500 text-white text-sm font-semibold rounded-lg shadow hover:bg-red-600 hover:shadow-md transition"
+                >
+                  メルカリ
+                </a>
+  
+              </div>
             </div>
+            <p class="font-bold">{{ item.name }}</p>
           </div>
-          <p class="font-bold">{{ item.name }}</p>
 
         </div>
       </div>
@@ -141,7 +147,7 @@
     data(){
       return{
         gachadata: data,
-        showingYear: 2026,
+        showingYear: 2024,
 
         isSearchOpen: false,
         search: "",
@@ -174,74 +180,84 @@
 
 
       groupedByYearMonth() {
-    const grouped = {}
+          const grouped = {}
 
-    let filtered = this.gachadata
+          let filtered = this.gachadata
 
-    // ⭐ お気に入りモード
-    if (this.showLikedOnly) {
-        filtered = filtered.filter(item => this.likedItems[item.url])
+          // ⭐ お気に入りモード
+          if (this.showLikedOnly) {
+              filtered = filtered.filter(item => this.likedItems[item.url])
 
-        // 👉 年ごとにグループ
-        filtered.forEach(item => {
-            const year = item.yearMonth.split("-")[0]
+              // 👉 年ごとにグループ
+              filtered.forEach(item => {
+                  const year = item.yearMonth.split("-")[0]
 
-            if (!grouped[year]) {
-                grouped[year] = []
-            }
+                  if (!grouped[year]) {
+                      grouped[year] = []
+                  }
 
-            grouped[year].push(item)
-        })
+                  grouped[year].push(item)
+              })
 
-        // 👉 年内で week昇順
-        Object.keys(grouped).forEach(key => {
-            grouped[key].sort((a, b) => a.week - b.week)
-        })
+             // 👉 年内で「月 → 週」で昇順ソート
+Object.keys(grouped).forEach(key => {
+    grouped[key].sort((a, b) => {
+        const [, monthA] = (a.yearMonth || '').split('-')
+        const [, monthB] = (b.yearMonth || '').split('-')
 
-        // 👉 年で新しい順
-        return Object.keys(grouped)
-            .sort((a, b) => Number(b) - Number(a))
-            .reduce((acc, key) => {
-                acc[key] = grouped[key]
-                return acc
-            }, {})
-    }
-
-    // =========================
-    // 通常モード（今まで通り）
-    // =========================
-
-    filtered = filtered.filter(item =>
-        item.yearMonth.startsWith(String(this.showingYear))
-    )
-
-    filtered.forEach(item => {
-        const yearMonth = item.yearMonth
-
-        if (!grouped[yearMonth]) {
-            grouped[yearMonth] = []
+        // 月で比較
+        if (Number(monthA) !== Number(monthB)) {
+            return Number(monthA) - Number(monthB)
         }
 
-        grouped[yearMonth].push(item)
+        // 同じ月なら週で比較
+        return a.week - b.week
     })
+})
 
-    Object.keys(grouped).forEach(key => {
-        grouped[key].sort((a, b) => a.week - b.week)
-    })
+              // 👉 年で新しい順
+              return Object.keys(grouped)
+                  .sort((a, b) => Number(b) - Number(a))
+                  .reduce((acc, key) => {
+                      acc[key] = grouped[key]
+                      return acc
+                  }, {})
+          }
 
-    return Object.keys(grouped)
-        .sort((a, b) => {
-            const [yearA, monthA] = a.split("-").map(Number)
-            const [yearB, monthB] = b.split("-").map(Number)
+          // =========================
+          // 通常モード（今まで通り）
+          // =========================
 
-            return yearB - yearA || monthB - monthA
-        })
-        .reduce((acc, key) => {
-            acc[key] = grouped[key]
-            return acc
-        }, {})
-}
-,
+          filtered = filtered.filter(item =>
+              item.yearMonth.startsWith(String(this.showingYear))
+          )
+
+          filtered.forEach(item => {
+              const yearMonth = item.yearMonth
+
+              if (!grouped[yearMonth]) {
+                  grouped[yearMonth] = []
+              }
+
+              grouped[yearMonth].push(item)
+          })
+
+          Object.keys(grouped).forEach(key => {
+              grouped[key].sort((a, b) => a.week - b.week)
+          })
+
+          return Object.keys(grouped)
+              .sort((a, b) => {
+                  const [yearA, monthA] = a.split("-").map(Number)
+                  const [yearB, monthB] = b.split("-").map(Number)
+
+                  return yearB - yearA || monthB - monthA
+              })
+              .reduce((acc, key) => {
+                  acc[key] = grouped[key]
+                  return acc
+              }, {})
+      },
 
       filteredItems() {
         if (!this.search) return this.gachadata
