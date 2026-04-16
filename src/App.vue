@@ -147,7 +147,7 @@
     data(){
       return{
         gachadata: data,
-        showingYear: 2024,
+        showingYear: 2025,
 
         isSearchOpen: false,
         search: "",
@@ -200,20 +200,20 @@
               })
 
              // 👉 年内で「月 → 週」で昇順ソート
-Object.keys(grouped).forEach(key => {
-    grouped[key].sort((a, b) => {
-        const [, monthA] = (a.yearMonth || '').split('-')
-        const [, monthB] = (b.yearMonth || '').split('-')
+              Object.keys(grouped).forEach(key => {
+                  grouped[key].sort((a, b) => {
+                      const [, monthA] = (a.yearMonth || '').split('-')
+                      const [, monthB] = (b.yearMonth || '').split('-')
 
-        // 月で比較
-        if (Number(monthA) !== Number(monthB)) {
-            return Number(monthA) - Number(monthB)
-        }
+                      // 月で比較
+                      if (Number(monthA) !== Number(monthB)) {
+                          return Number(monthA) - Number(monthB)
+                      }
 
-        // 同じ月なら週で比較
-        return a.week - b.week
-    })
-})
+                      // 同じ月なら週で比較
+                      return a.week - b.week
+                  })
+              })
 
               // 👉 年で新しい順
               return Object.keys(grouped)
